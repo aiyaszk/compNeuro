@@ -1,0 +1,51 @@
+#include <Servo.h>
+#include <SoftwareSerial.h> // Bluetooth modülü için gerekli kütüphane
+
+// Servo motorlar için pin tanımlamaları
+Servo servoFront;
+Servo servoLeft;
+Servo servoRight;
+Servo servoBack;
+
+// Bluetooth modülü için RX ve TX pinleri
+SoftwareSerial bluetooth(10, 11); // RX, TX
+
+void setup() {
+  // Servo motorlarını başlat
+  servoFront.attach(5); // İleri hareket için servo motor pin
+  servoLeft.attach(6);  // Sol hareket için servo motor pin
+  servoRight.attach(9); // Sağ hareket için servo motor pin
+  servoBack.attach(3);  // Geri hareket için servo motor pin
+  
+  // Bluetooth modülünü başlat
+  bluetooth.begin(9600);
+}
+
+void loop() {
+  if (bluetooth.available()) {
+    String data = bluetooth.readStringUntil('\n'); // Bluetooth üzerinden gelen veriyi oku
+    controlWheelchair(data); // Tekerlekli sandalyeyi kontrol et
+  }
+}
+
+void controlWheelchair(String data) {
+  // Veri formatı: "S1:val,D1:val,S2:val,..."
+  
+  // Sinyallerde pikleşme olup olmadığını kontrol et
+  if (data.indexOf("S6") != -1 || data.indexOf("S4") != -1 || data.indexOf("D6") != -1) {
+    moveServos(servoLeft); // Sol yöne hareket
+  } else if (data.indexOf("D2") != -1 || data.indexOf("S1") != -1 || data.indexOf("D1") != -1) {
+    moveServos(servoFront); // İleri yöne hareket
+  } else if (data.indexOf("S5") != -1 || data.indexOf("S7") != -1 || data.indexOf("D7") != -1) {
+    moveServos(servoRight); // Sağ yöne hareket
+  } else if (data.indexOf("D4") != -1 || data.indexOf("S8") != -1 || data.indexOf("D5") != -1) {
+    moveServos(servoBack); // Geri yöne hareket
+  }
+}
+
+void moveServos(Servo servo) {
+  // Belirli bir servo motorunu harekete geçir
+  servo.write(90); // Servo motoru belirli bir açıya çevir
+  delay(1000); // 1 saniye bekle
+  servo.write(0); // Servo motorunu başlangıç pozisyonuna getir
+}
